@@ -1,8 +1,14 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RegisterDto } from 'src/auth/dto/registerUserDto';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
+import { LoginDto } from 'src/auth/dto/loginUserDto';
 
 @Injectable()
 export class UserService {
@@ -26,6 +32,26 @@ export class UserService {
             }
 
             throw error;
+        }
+    }
+
+    async findUser(loginUserDto: LoginDto) {
+        try {
+            const user = await this.userModel
+                .findOne({ email: loginUserDto.email })
+                .exec();
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+            return user;
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            throw new InternalServerErrorException(
+                'Something went wrong while finding user',
+            );
         }
     }
 }
