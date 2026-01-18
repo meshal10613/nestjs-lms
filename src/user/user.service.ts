@@ -35,7 +35,7 @@ export class UserService {
         }
     }
 
-    async findUser(loginUserDto: LoginDto) {
+    async getUserByEmail(loginUserDto: LoginDto) {
         try {
             const user = await this.userModel
                 .findOne({ email: loginUserDto.email })
@@ -53,5 +53,9 @@ export class UserService {
                 'Something went wrong while finding user',
             );
         }
+    }
+
+    async getUserById(id: string) {
+        return await this.userModel.findById({ _id: id }).select('-password');
     }
 }
