@@ -20,7 +20,7 @@ export class User {
     @Prop({ required: true })
     password: string;
 
-    @Prop({ default: Role.Student })
+    @Prop({ enum: Role, default: Role.Student })
     role: string;
 }
 
