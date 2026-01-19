@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { RegisterDto } from './dto/registerUserDto';
+import { RegisterUserDto } from './dto/register.user.dto';
 import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { LoginDto } from './dto/loginUserDto';
+import { LoginUserDto } from './dto/login.user.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +11,7 @@ export class AuthService {
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
     ) {}
-    async registerUser(registerUserDto: RegisterDto) {
+    async registerUser(registerUserDto: RegisterUserDto) {
         const saltRound = 10;
         const hash = await bcrypt.hash(registerUserDto.password, saltRound);
 
@@ -33,7 +33,7 @@ export class AuthService {
         };
     }
 
-    async loginUser(loginUserDto: LoginDto) {
+    async loginUser(loginUserDto: LoginUserDto) {
         const user = await this.userService.getUserByEmail(loginUserDto);
 
         const isPasswordValid = await bcrypt.compare(

@@ -7,8 +7,8 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/registerUserDto';
-import { LoginDto } from './dto/loginUserDto';
+import { RegisterUserDto } from './dto/register.user.dto';
+import { LoginUserDto } from './dto/login.user.dto';
 import { AuthGuard } from './auth.guard';
 import { UserService } from 'src/user/user.service';
 
@@ -20,14 +20,14 @@ export class AuthController {
     ) {}
 
     @Post('register')
-    async register(@Body() registerUserDto: RegisterDto) {
+    async register(@Body() registerUserDto: RegisterUserDto) {
         //? Dto -> Data Transfer Object
         const result = await this.authService.registerUser(registerUserDto);
         return result;
     }
 
     @Post('login')
-    async login(@Body() loginUserDto: LoginDto) {
+    async login(@Body() loginUserDto: LoginUserDto) {
         const result = await this.authService.loginUser(loginUserDto);
         return result;
     }
