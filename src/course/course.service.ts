@@ -1,39 +1,49 @@
 import {
     BadRequestException,
+    ForbiddenException,
     Injectable,
-    InternalServerErrorException,
+    NotFoundException,
 } from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Course } from './schemas/course.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { UserRole } from 'src/user/user.types';
+import { User, UserDocument } from 'src/user/schemas/user.schema';
 
 @Injectable()
 export class CourseService {
-    constructor(@InjectModel(Course.name) private courseModel: Model<Course>) {}
+    constructor(
+        @InjectModel(Course.name) private courseModel: Model<Course>,
+        @InjectModel(User.name) private userModel: Model<UserDocument>,
+    ) {}
 
     async create(createCourseDto: CreateCourseDto) {
-        try {
-            return await this.courseModel.create(createCourseDto);
-        } catch (error: any) {
-            // Mongo duplicate key error
-            if (error.code === 11000) {
-                throw new BadRequestException(
-                    `Course with level "${error.keyValue.level}" already exists`,
-                );
-            }
+        const { userId } = createCourseDto;
 
-            // Mongoose validation error for missing required fields
-            if (error.name === 'ValidationError') {
-                const missingFields = Object.keys(error.errors);
-                throw new BadRequestException(
-                    `Missing or invalid required field(s): ${missingFields.join(', ')}`,
-                );
-            }
-
-            throw new InternalServerErrorException('Failed to create course');
+        // 1️⃣ Validate userId format
+        if (!Types.ObjectId.isValid(userId)) {
+            throw new BadRequestException(
+                'Invalid userId: must be a 24-character hexadecimal string',
+            );
         }
+
+        // 2️⃣ Check if user exists
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            throw new NotFoundException(`User with ID ${userId} not found`);
+        }
+
+        // 3️⃣ Check if user is an Admin
+        if (user.role !== UserRole.Admin) {
+            throw new ForbiddenException(
+                `User with ID ${userId} is not an admin and cannot create courses`,
+            );
+        }
+
+        // 4️⃣ Create the course
+        return await this.courseModel.create(createCourseDto);
     }
 
     findAll() {

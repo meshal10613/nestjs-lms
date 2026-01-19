@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     ConflictException,
     ForbiddenException,
     Injectable,
@@ -8,7 +9,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { RegisterUserDto } from 'src/auth/dto/register.user.dto';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { LoginUserDto } from 'src/auth/dto/login.user.dto';
 import { UserRole } from './user.types';
 
@@ -66,6 +67,13 @@ export class UserService {
     }
 
     async deleteUserById(currentUser: any, targetUserId: string) {
+        // 1️⃣ Validate ID length and format
+        if (!Types.ObjectId.isValid(targetUserId)) {
+            throw new BadRequestException(
+                'Invalid user ID: must be a 24-character hexadecimal string',
+            );
+        }
+
         const targetUser = await this.getUserById(targetUserId);
 
         if (!targetUser) {
@@ -74,12 +82,12 @@ export class UserService {
             );
         }
 
-        // Self-deletion: allowed for everyone
+        // 2️⃣ Self-deletion: allowed for everyone
         if (currentUser.sub === targetUserId) {
             return await this._delete(targetUserId);
         }
 
-        // Admin deleting non-admin: allowed
+        // 3️⃣ Admin deleting non-admin: allowed
         if (
             currentUser.role === UserRole.Admin &&
             targetUser.role !== UserRole.Admin
@@ -87,7 +95,7 @@ export class UserService {
             return await this._delete(targetUserId);
         }
 
-        // Otherwise, forbidden
+        // 4️⃣ Otherwise, forbidden
         throw new ForbiddenException('You cannot delete this user');
     }
 
