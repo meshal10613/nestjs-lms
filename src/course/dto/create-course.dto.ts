@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateCourseDto {
     @IsNotEmpty()
@@ -16,4 +16,8 @@ export class CreateCourseDto {
     @IsNotEmpty()
     @IsNumber()
     price: number;
+
+    @IsNotEmpty()
+    @IsMongoId()
+    userId: string;
 }

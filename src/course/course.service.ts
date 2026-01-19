@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,12 +14,26 @@ export class CourseService {
     constructor(@InjectModel(Course.name) private courseModel: Model<Course>) {}
 
     async create(createCourseDto: CreateCourseDto) {
-        return await this.courseModel.create({
-            name: createCourseDto.name,
-            description: createCourseDto.description,
-            level: createCourseDto.level,
-            price: createCourseDto.price,
-        });
+        try {
+            return await this.courseModel.create(createCourseDto);
+        } catch (error: any) {
+            // Mongo duplicate key error
+            if (error.code === 11000) {
+                throw new BadRequestException(
+                    `Course with level "${error.keyValue.level}" already exists`,
+                );
+            }
+
+            // Mongoose validation error for missing required fields
+            if (error.name === 'ValidationError') {
+                const missingFields = Object.keys(error.errors);
+                throw new BadRequestException(
+                    `Missing or invalid required field(s): ${missingFields.join(', ')}`,
+                );
+            }
+
+            throw new InternalServerErrorException('Failed to create course');
+        }
     }
 
     findAll() {
