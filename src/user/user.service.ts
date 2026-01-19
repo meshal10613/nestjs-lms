@@ -58,4 +58,8 @@ export class UserService {
     async getUserById(id: string) {
         return await this.userModel.findById({ _id: id }).select('-password');
     }
+
+    async getAllUser() {
+        return await this.userModel.find().select('-password');
+    }
 }
