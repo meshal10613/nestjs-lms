@@ -3,6 +3,7 @@ import {
     Delete,
     Get,
     Param,
+    Patch,
     Request,
     UseGuards,
 } from '@nestjs/common';
@@ -21,6 +22,21 @@ export class UserController {
     @Roles(UserRole.Admin)
     async getAllUser() {
         const result = await this.userService.getAllUser();
+        return result;
+    }
+
+    @Patch(':id')
+    @UseGuards(AuthGuard)
+    async updateUserById(@Request() req, @Param('id') id: string) {
+        const userId = req.user.sub;
+        const userRole = req.user.role;
+
+        const result = await this.userService.updateUserById(
+            id,
+            req.body,
+            userId,
+            userRole,
+        );
         return result;
     }
 

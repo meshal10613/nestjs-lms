@@ -28,13 +28,15 @@ export class AuthService {
         const token = await this.jwtService.signAsync(payload);
 
         return {
+            message: 'User registered successfully',
             access_token: token,
             user,
         };
     }
 
     async loginUser(loginUserDto: LoginUserDto) {
-        const user = await this.userService.getUserByEmail(loginUserDto);
+        const { data: user } =
+            await this.userService.getUserByEmail(loginUserDto);
 
         const isPasswordValid = await bcrypt.compare(
             loginUserDto.password,
@@ -54,6 +56,7 @@ export class AuthService {
         const token = await this.jwtService.signAsync(payload);
 
         return {
+            message: 'User logged in successfully',
             access_token: token,
             user,
         };

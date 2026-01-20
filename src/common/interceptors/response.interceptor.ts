@@ -12,11 +12,17 @@ export class ResponseInterceptor implements NestInterceptor {
         const response = context.switchToHttp().getResponse();
 
         return next.handle().pipe(
-            map((data) => ({
-                success: true,
-                statusCode: response.statusCode,
-                data,
-            })),
+            map(
+                (data: {
+                    message?: string;
+                    data?: any;
+                    access_token?: string;
+                }) => ({
+                    success: true,
+                    statusCode: response.statusCode,
+                    ...data,
+                }),
+            ),
         );
     }
 }

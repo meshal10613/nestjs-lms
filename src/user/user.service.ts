@@ -46,7 +46,10 @@ export class UserService {
             if (!user) {
                 throw new NotFoundException('User not found');
             }
-            return user;
+            return {
+                message: `User fetched successfully`,
+                data: user,
+            };
         } catch (error) {
             if (error instanceof NotFoundException) {
                 throw error;
@@ -59,11 +62,107 @@ export class UserService {
     }
 
     async getUserById(id: string) {
-        return await this.userModel.findById({ _id: id }).select('-password');
+        const result = await this.userModel
+            .findById({ _id: id })
+            .select('-password');
+        return {
+            message: `User fetched successfully`,
+            data: result,
+        };
     }
 
     async getAllUser() {
-        return await this.userModel.find().select('-password');
+        const result = await this.userModel.find().select('-password');
+        return { message: `All users fetched successfully`, data: result };
+    }
+
+    async updateUserById(
+        targetUserId: string,
+        data: any,
+        requesterId: string,
+        requesterRole: UserRole,
+    ) {
+        if (!Types.ObjectId.isValid(targetUserId)) {
+            throw new BadRequestException('Invalid user ID');
+        }
+
+        const targetUser = await this.getUserById(targetUserId);
+        if (!targetUser) {
+            throw new NotFoundException('User not found');
+        }
+
+        const isSelf = requesterId === targetUserId;
+        const isAdmin = requesterRole === UserRole.Admin;
+
+        const SELF_FIELDS = ['fname', 'lname', 'email', 'password'];
+        const ADMIN_SELF_FIELDS = [...SELF_FIELDS, 'role'];
+        const ADMIN_OTHER_FIELDS = ['role'];
+
+        // 🚫 Normal user rules
+        if (!isAdmin) {
+            if (!isSelf) {
+                throw new ForbiddenException(
+                    'You can only update your own profile',
+                );
+            }
+
+            if ('role' in data) {
+                throw new ForbiddenException('You cannot update role');
+            }
+        }
+
+        // 👑 Admin rules
+        if (isAdmin && !isSelf) {
+            const keys = Object.keys(data);
+
+            // Admin can ONLY update role for others
+            if (keys.length !== 1 || !keys.includes('role')) {
+                throw new ForbiddenException(
+                    'Admin can only update role of other users',
+                );
+            }
+        }
+
+        // 🎯 Allowed fields
+        let allowedFields: string[] = [];
+        if (isAdmin) {
+            // if admin & is self then can update
+            if (isSelf) {
+                allowedFields = ADMIN_SELF_FIELDS;
+            } else {
+                // if admin & is not self then can only update role
+                allowedFields = ADMIN_OTHER_FIELDS;
+            }
+        }
+        // if not admin then can only update self
+        allowedFields = isSelf ? SELF_FIELDS : allowedFields;
+
+        const filteredData = Object.keys(data)
+            .filter((key) => allowedFields.includes(key))
+            .reduce(
+                (obj, key) => {
+                    obj[key] = data[key];
+                    return obj;
+                },
+                {} as Record<string, any>,
+            );
+
+        if (Object.keys(filteredData).length === 0) {
+            throw new BadRequestException('No valid fields to update');
+        }
+
+        const updatedUser = await this.userModel.findByIdAndUpdate(
+            targetUserId,
+            filteredData,
+            {
+                new: true,
+            },
+        );
+
+        return {
+            message: `${Object.keys(filteredData).join(', ')} updated successfully`,
+            data: updatedUser,
+        };
     }
 
     async deleteUserById(currentUser: any, targetUserId: string) {
@@ -74,7 +173,7 @@ export class UserService {
             );
         }
 
-        const targetUser = await this.getUserById(targetUserId);
+        const { data: targetUser } = await this.getUserById(targetUserId);
 
         if (!targetUser) {
             throw new NotFoundException(
@@ -84,7 +183,11 @@ export class UserService {
 
         // 2️⃣ Self-deletion: allowed for everyone
         if (currentUser.sub === targetUserId) {
-            return await this._delete(targetUserId);
+            const result = await this._delete(targetUserId);
+            return {
+                message: `User ${targetUserId} deleted successfully`,
+                data: result,
+            };
         }
 
         // 3️⃣ Admin deleting non-admin: allowed
@@ -92,7 +195,11 @@ export class UserService {
             currentUser.role === UserRole.Admin &&
             targetUser.role !== UserRole.Admin
         ) {
-            return await this._delete(targetUserId);
+            const result = await this._delete(targetUserId);
+            return {
+                message: `User ${targetUserId} deleted successfully`,
+                data: result,
+            };
         }
 
         // 4️⃣ Otherwise, forbidden

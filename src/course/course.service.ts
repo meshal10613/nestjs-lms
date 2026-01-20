@@ -43,7 +43,12 @@ export class CourseService {
         }
 
         // 4️⃣ Create the course
-        return await this.courseModel.create(createCourseDto);
+        const result = await this.courseModel.create(createCourseDto);
+        await result.populate('userId', '-password');
+        return {
+            message: 'Course created successfully',
+            data: result,
+        };
     }
 
     findAll() {
