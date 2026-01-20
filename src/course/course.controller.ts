@@ -38,8 +38,13 @@ export class CourseController {
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {
-        return this.courseService.update(+id, updateCourseDto);
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.Admin)
+    updateCourseById(
+        @Param('id') id: string,
+        @Body() updateCourseDto: UpdateCourseDto,
+    ) {
+        return this.courseService.updateCourseById(id, updateCourseDto);
     }
 
     @Delete(':id')

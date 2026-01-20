@@ -1,4 +1,11 @@
-import { IsMongoId, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+    IsEnum,
+    IsMongoId,
+    IsNotEmpty,
+    IsNumber,
+    IsString,
+} from 'class-validator';
+import { Level } from '../course.types';
 
 export class CreateCourseDto {
     @IsNotEmpty()
@@ -10,8 +17,10 @@ export class CreateCourseDto {
     description: string;
 
     @IsNotEmpty()
-    @IsString()
-    level: string;
+    @IsEnum(Level, {
+        message: 'level must be one of beginner, intermediate, advanced',
+    })
+    level: Level;
 
     @IsNotEmpty()
     @IsNumber()

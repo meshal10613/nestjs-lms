@@ -59,9 +59,25 @@ export class CourseService {
         return `This action returns a #${id} course`;
     }
 
-    update(id: number, updateCourseDto: UpdateCourseDto) {
-        console.log(updateCourseDto);
-        return `This action updates a #${id} course`;
+    async updateCourseById(id: string, updateCourseDto: UpdateCourseDto) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException(
+                'Invalid user ID: must be a 24-character hexadecimal string',
+            );
+        }
+
+        const course = await this.courseModel.findById(id);
+        if (!course) {
+            throw new NotFoundException(`Course with ID ${id} not found`);
+        }
+
+        const result = await this.courseModel
+            .findByIdAndUpdate(id, updateCourseDto, { new: true })
+            .populate('userId', '-password');
+        return {
+            message: `${Object.keys(updateCourseDto).join(', ')} updated successfully`,
+            data: result,
+        };
     }
 
     async deleteCourseById(id: string) {
