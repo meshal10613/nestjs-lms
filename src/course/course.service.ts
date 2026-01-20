@@ -64,7 +64,21 @@ export class CourseService {
         return `This action updates a #${id} course`;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} course`;
+    async deleteCourseById(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException(
+                'Invalid user ID: must be a 24-character hexadecimal string',
+            );
+        }
+
+        const course = await this.courseModel.findById(id);
+        if (!course) {
+            throw new NotFoundException(`Course with ID ${id} not found`);
+        }
+
+        await this.courseModel.findByIdAndDelete(id);
+        return {
+            message: 'Course deleted successfully',
+        };
     }
 }

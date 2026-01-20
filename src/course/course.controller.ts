@@ -43,7 +43,9 @@ export class CourseController {
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.courseService.remove(+id);
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.Admin)
+    deleteCourseById(@Param('id') id: string) {
+        return this.courseService.deleteCourseById(id);
     }
 }
