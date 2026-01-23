@@ -51,8 +51,15 @@ export class CourseService {
         };
     }
 
-    findAll() {
-        return `This action returns all course`;
+    async findAll() {
+        const result = await this.courseModel
+            .find()
+            .populate('userId', '-password');
+
+        return {
+            message: 'All course retrieved successfully',
+            data: result,
+        };
     }
 
     findOne(id: number) {
