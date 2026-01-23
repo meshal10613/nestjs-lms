@@ -62,8 +62,15 @@ export class CourseService {
         };
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} course`;
+    async findOne(id: string) {
+        const result = await this.courseModel
+            .findById(id)
+            .populate('userId', '-password');
+
+        return {
+            message: 'Course retrieved successfully',
+            data: result,
+        };
     }
 
     async updateCourseById(id: string, updateCourseDto: UpdateCourseDto) {
