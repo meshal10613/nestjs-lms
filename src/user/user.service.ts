@@ -12,6 +12,7 @@ import { User } from './schemas/user.schema';
 import { Model, Types } from 'mongoose';
 import { LoginUserDto } from 'src/auth/dto/login.user.dto';
 import { UserRole } from './user.types';
+import { paginate } from '../common/pagination/pagination.util';
 
 @Injectable()
 export class UserService {
@@ -71,9 +72,23 @@ export class UserService {
         };
     }
 
-    async getAllUser() {
-        const result = await this.userModel.find().select('-password');
-        return { message: `All users fetched successfully`, data: result };
+    async getAllUser(query: any) {
+        const result = await paginate(
+            this.userModel,
+            {},
+            {
+                page: query.page,
+                limit: query.limit,
+                sort: query.sort,
+            },
+            null,
+            '-password',
+        );
+
+        return {
+            message: 'All users fetched successfully',
+            ...result,
+        };
     }
 
     async updateUserById(

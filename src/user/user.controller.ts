@@ -4,6 +4,7 @@ import {
     Get,
     Param,
     Patch,
+    Query,
     Request,
     UseGuards,
 } from '@nestjs/common';
@@ -20,8 +21,8 @@ export class UserController {
     @Get()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.Admin)
-    async getAllUser() {
-        const result = await this.userService.getAllUser();
+    async getAllUser(@Query() query: any) {
+        const result = await this.userService.getAllUser(query);
         return result;
     }
 

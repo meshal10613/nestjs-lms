@@ -11,6 +11,7 @@ import { Course } from './schemas/course.schema';
 import { Model, Types } from 'mongoose';
 import { UserRole } from 'src/user/user.types';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
+import { paginate } from '../common/pagination/pagination.util';
 
 @Injectable()
 export class CourseService {
@@ -51,14 +52,21 @@ export class CourseService {
         };
     }
 
-    async findAll() {
-        const result = await this.courseModel
-            .find()
-            .populate('userId', '-password');
+    async findAll(query: any) {
+        const result = await paginate(
+            this.courseModel,
+            {},
+            {
+                page: query.page,
+                limit: query.limit,
+                sort: query.sort,
+            },
+            { path: 'userId', select: '-password' },
+        );
 
         return {
             message: 'All course retrieved successfully',
-            data: result,
+            ...result,
         };
     }
 
